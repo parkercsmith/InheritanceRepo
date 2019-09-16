@@ -188,11 +188,9 @@ function death(network::NetworkParameters)
 end
 
 function findMom(network::NetworkParameters, kID::Int64)
+    network.popFitness[kID] = 0
     fitWeights = weights(network.popFitness)
-    momIndex = kID
-    while(momIndex == kID)
-        momIndex = sample(1:network.popSize, fitWeights)
-    end
+    momIndex = sample(1:network.popSize, fitWeights)
     momIndex
 end
 
@@ -222,7 +220,7 @@ function birth(network::NetworkParameters, child::Int64, parent::Int64)
     if(rand() < network.popPNC[child])
         network.edgeMatrix[parent, child] = 1
         network.edgeMatrix[child, parent] = 1
-    end #Pb != 0 now
+    end #Pb != 1 now
 
     for(i) in 1:network.popSize
         if(i != child && network.edgeMatrix[i, child] == 0)
@@ -365,5 +363,5 @@ using Profile
 Profile.clear()
 runSims(0.1, 1.0)
 @profile runSims(0.1, 1.0)
-Profile.print()
+#Profile.print()
 #runSims(0.1, 1.0)=#
