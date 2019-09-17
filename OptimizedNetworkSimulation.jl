@@ -231,7 +231,7 @@ function birth(network::NetworkParameters, child::Int64, parent::Int64)
                         network.edgeMatrix[child, i] = 1
                     end
                 else
-                    if(rand() < network.popPNR[child])#PND MODE
+                    if(rand() < network.popPND[child])#PNR MODE
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
