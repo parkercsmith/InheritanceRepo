@@ -42,12 +42,12 @@ mutable struct NetworkParameters
 
     function NetworkParameters(b::Float64, cL::Float64)
 
-        numGens = 1000 #EDIT 100000
+        numGens = 100000
         popSize = 100
         popPNC = zeros(Float64, popSize)
-        popPNC[:] .= 0.5
+        popPNC[:] .= 0.2 #EDIT 0.5
         popPND = zeros(Float64, popSize)
-        popPND[:] .= 0.5
+        popPND[:] .= 0.2 #EDIT 0.5
         popPR = zeros(Float64, popSize)
         popPR[:] .= .0001
         popStrategies = zeros(Int64, popSize)
@@ -225,13 +225,13 @@ function birth(network::NetworkParameters, child::Int64, parent::Int64)
     for(i) in 1:network.popSize
         if(i != child && network.edgeMatrix[i, child] == 0)
             if(network.edgeMatrix[i, parent] != 0)
-                if(network.edgeMatrix[i, parent] == 1) #PNI MODE
+                if(network.edgeMatrix[i, parent] == 1) #PN MODE
                     if(rand() < network.popPNC[child])
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
                 else
-                    if(rand() < network.popPND[child])#PNR MODE
+                    if(rand() < network.popPNC[child])#PN MODE
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
@@ -291,7 +291,7 @@ end
 
 function runSims(CL::Float64, BEN::Float64)
     dataArray = zeros(9)
-    repSims = 1 #EDIT 10
+    repSims = 10
     for(x) in 1:repSims
 
         #initializes globalstuff structure with generic constructor
@@ -309,10 +309,8 @@ function runSims(CL::Float64, BEN::Float64)
             resolveFitnesses(network)
 
             if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
-                #coopRatio(network)
-                println("PNI: $(round(sum(network.popPNC)/100, sigdigits = 3))")
-                println("PNR: $(round(sum(network.popPND)/100, sigdigits = 3))")
-                #probNeighbor(network)
+                coopRatio(network)
+                probNeighbor(network)
                 #probRandom(network)
                 #degrees(network)
                 #distance(network)
@@ -343,7 +341,7 @@ function runSims(CL::Float64, BEN::Float64)
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("deleteMe_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPN", dataArray[1], "void", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCooperatorDegree", dataArray[5], "meanDefectorDegree", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
+    save("PNBaseComp_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPN", dataArray[1], "void", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCooperatorDegree", dataArray[5], "meanDefectorDegree", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
@@ -354,7 +352,7 @@ argTab = ArgParseSettings(description = "arguments and stuff, don't worry about 
 end
 parsedArgs = parse_args(ARGS, argTab)
 currCostLink = parsedArgs["cLink"]
-for(b) in 5:5 #EDIT 2:10
+for(b) in 2:10
     currBenefit = Float64(b)
     runSims(currCostLink, currBenefit)
 end
