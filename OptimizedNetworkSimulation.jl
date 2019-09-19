@@ -42,7 +42,7 @@ mutable struct NetworkParameters
 
     function NetworkParameters(b::Float64, cL::Float64)
 
-        numGens = 100 #EDIT 100000
+        numGens = 1000 #EDIT 100000
         popSize = 100
         popPNC = zeros(Float64, popSize)
         popPNC[:] .= 0.5
@@ -310,8 +310,8 @@ function runSims(CL::Float64, BEN::Float64)
 
             if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
                 #coopRatio(network)
-                println("PNI: $(round(sum(network.popPNC)/100))")
-                println("PNR: $(round(sum(network.popPND)/100))")
+                println("PNI: $(round(sum(network.popPNC)/100), sigdigits=3)")
+                println("PNR: $(round(sum(network.popPND)/100), sigdigits=3)")
                 #probNeighbor(network)
                 #probRandom(network)
                 #degrees(network)
