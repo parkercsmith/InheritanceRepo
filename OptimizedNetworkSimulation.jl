@@ -45,9 +45,9 @@ mutable struct NetworkParameters
         numGens = 100000
         popSize = 100
         popPNC = zeros(Float64, popSize)
-        popPNC[:] .= 0.2 #EDIT 0.5
+        popPNC[:] .= 0.5
         popPND = zeros(Float64, popSize)
-        popPND[:] .= 0.2 #EDIT 0.5
+        popPND[:] .= 0.5
         popPR = zeros(Float64, popSize)
         popPR[:] .= .0001
         popStrategies = zeros(Int64, popSize)
@@ -61,7 +61,7 @@ mutable struct NetworkParameters
         benefit = b
         linkCost = cL
         mu = .01
-        delta = 0.5
+        delta = 0.1 #EDIT 0.5
 
         new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, popPNC, popPND, popPR, popStrategies, zeros(Float64, popSize), popFitness, numGens, popSize, edgeMatrix, cost, benefit, synergism, linkCost, mu, delta)
     end
@@ -341,7 +341,7 @@ function runSims(CL::Float64, BEN::Float64)
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("PNCDComp_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNC", dataArray[1], "meanPND", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCooperatorDegree", dataArray[5], "meanDefectorDegree", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
+    save("deltaCDComp_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNC", dataArray[1], "meanPND", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCooperatorDegree", dataArray[5], "meanDefectorDegree", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
