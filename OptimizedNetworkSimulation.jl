@@ -9,13 +9,13 @@ using FileIO
 mutable struct NetworkParameters
 
     #measurement data
-    meanCoopRatio::Float64
+    meanCoopFreq::Float64
     meanProbNeighborCoop::Float64
     meanProbNeighborDef::Float64
     meanProbRandom::Float64
     meanDegree::Float64
-    meanCoopDegree::Float64
-    meanDefDegree::Float64
+    meanCoopConns::Float64
+    meanDefConns::Float64
     meanCoopDefDistance::Float64
     meanDistInclusion::Float64
 
@@ -76,7 +76,7 @@ function coopRatio(network::NetworkParameters)
         end
     end
     coopCount /= network.popSize
-    network.meanCoopRatio += coopCount
+    network.meanCoopFreq += coopCount
 end
 
 function probNeighbor(network::NetworkParameters)
@@ -108,28 +108,32 @@ function degrees(network::NetworkParameters)
     defDegTotal = 0
     for(i) in 1:network.popSize
         degCounter = 0
+        if(network.popStrategies[i] == 1)
+            cooperatorsPresent += 1
+        end
         for(ii) in 1:network.popSize
             if(network.edgeMatrix[i, ii] != 0)
                 degCounter += 1
+                if(network.popStrategies[i] == 1 && network.popStrategies[ii] == 1)
+                    coopDegTotal += 1
+                else
+                    if(network.popStrategies[i] == 0  && network.popStrategies[ii] == 0)
+                        defDegTotal += 1
+                    end
+                end
             end
         end
         degTotal += degCounter
-        if(network.popStrategies[i] == 1)
-            coopDegTotal += degCounter
-            cooperatorsPresent += 1
-        else
-            defDegTotal += degCounter
-        end
     end
     degTotal /= network.popSize
     defDegTotal /= (network.popSize - cooperatorsPresent)
     coopDegTotal /= cooperatorsPresent
     network.meanDegree += degTotal
     if(coopDegTotal == coopDegTotal)
-        network.meanCoopDegree += coopDegTotal
+        network.meanCoopConns += coopDegTotal
     end
     if(defDegTotal == defDegTotal)
-        network.meanDefDegree += defDegTotal
+        network.meanDefConns += defDegTotal
     end
 end
 
@@ -310,9 +314,9 @@ function runSims(CL::Float64, BEN::Float64)
 
             if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
                 coopRatio(network)
-                probNeighbor(network)
+                #probNeighbor(network)
                 #probRandom(network)
-                #degrees(network)
+                degrees(network)
                 #distance(network)
             end
 
@@ -323,9 +327,9 @@ function runSims(CL::Float64, BEN::Float64)
         network.meanProbNeighborDef /= 80000.0
         network.meanProbRandom /= 80000.0
         network.meanDegree /= 80000.0
-        network.meanCoopDegree /= 80000.0
-        network.meanDefDegree /= 80000.0
-        network.meanCoopRatio /= 80000.0
+        network.meanCoopConns /= 80000.0
+        network.meanDefConns /= 80000.0
+        network.meanCoopFreq /= 80000.0
         network.meanCoopDefDistance /= 80000.0
         network.meanDistInclusion /= 80000.0
 
@@ -333,15 +337,15 @@ function runSims(CL::Float64, BEN::Float64)
         dataArray[2] += network.meanProbNeighborDef
         dataArray[3] += network.meanProbRandom
         dataArray[4] += network.meanDegree
-        dataArray[5] += network.meanCoopDegree
-        dataArray[6] += network.meanDefDegree
+        dataArray[5] += network.meanCoopConns
+        dataArray[6] += network.meanDefConns
         dataArray[7] += network.meanCoopDefDistance
         dataArray[8] += network.meanDistInclusion
-        dataArray[9] += network.meanCoopRatio
+        dataArray[9] += network.meanCoopFreq
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("deltaBaseComp_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPN", dataArray[1], "void", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCooperatorDegree", dataArray[5], "meanDefectorDegree", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
+    save("deltaBaseComp_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPN", dataArray[1], "void", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCoopToCoopConns", dataArray[5], "meanDefToDefConns", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
