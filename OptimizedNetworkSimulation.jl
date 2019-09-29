@@ -14,8 +14,7 @@ mutable struct NetworkParameters
     meanProbNeighborDef::Float64
     meanProbRandom::Float64
     meanDegree::Float64
-    meanCoopConns::Float64
-    meanDefConns::Float64
+    meanAssortment::Float64
     meanCoopDefDistance::Float64
     meanDistInclusion::Float64
 
@@ -63,7 +62,7 @@ mutable struct NetworkParameters
         mu = .01
         delta = 0.1 #EDIT 0.5
 
-        new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, popPNC, popPND, popPR, popStrategies, zeros(Float64, popSize), popFitness, numGens, popSize, edgeMatrix, cost, benefit, synergism, linkCost, mu, delta)
+        new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, popPNC, popPND, popPR, popStrategies, zeros(Float64, popSize), popFitness, numGens, popSize, edgeMatrix, cost, benefit, synergism, linkCost, mu, delta)
     end
 end
 
@@ -102,39 +101,26 @@ function probRandom(network::NetworkParameters)
 end
 
 function degrees(network::NetworkParameters)
-    cooperatorsPresent = 0
     degTotal = 0
-    coopDegTotal = 0
-    defDegTotal = 0
+    assmtTotal = 0
     for(i) in 1:network.popSize
         degCounter = 0
-        if(network.popStrategies[i] == 1)
-            cooperatorsPresent += 1
-        end
+        assmtCounter = 0
         for(ii) in 1:network.popSize
             if(network.edgeMatrix[i, ii] != 0)
                 degCounter += 1
-                if(network.popStrategies[i] == 1 && network.popStrategies[ii] == 1)
-                    coopDegTotal += 1
-                else
-                    if(network.popStrategies[i] == 0  && network.popStrategies[ii] == 0)
-                        defDegTotal += 1
-                    end
+                if(network.popStrategies[i] == network.popStrategies[ii])
+                    assmtCounter += 1
                 end
             end
         end
         degTotal += degCounter
+        assmtTotal += (assmtCounter/degCounter)
     end
     degTotal /= network.popSize
-    defDegTotal /= (network.popSize - cooperatorsPresent)
-    coopDegTotal /= cooperatorsPresent
+    assmtTotal /= network.popSize
     network.meanDegree += degTotal
-    if(coopDegTotal == coopDegTotal)
-        network.meanCoopConns += coopDegTotal
-    end
-    if(defDegTotal == defDegTotal)
-        network.meanDefConns += defDegTotal
-    end
+    network.meanAssortment += assmtTotal
 end
 
 function distance(network::NetworkParameters)
@@ -294,7 +280,7 @@ function getDegree(network::NetworkParameters) #made less efficient by 2 in edge
 end
 
 function runSims(CL::Float64, BEN::Float64)
-    dataArray = zeros(9)
+    dataArray = zeros(8)
     repSims = 10
     for(x) in 1:repSims
 
@@ -327,8 +313,7 @@ function runSims(CL::Float64, BEN::Float64)
         network.meanProbNeighborDef /= 80000.0
         network.meanProbRandom /= 80000.0
         network.meanDegree /= 80000.0
-        network.meanCoopConns /= 80000.0
-        network.meanDefConns /= 80000.0
+        network.meanAssortment /= 80000.0
         network.meanCoopFreq /= 80000.0
         network.meanCoopDefDistance /= 80000.0
         network.meanDistInclusion /= 80000.0
@@ -337,15 +322,14 @@ function runSims(CL::Float64, BEN::Float64)
         dataArray[2] += network.meanProbNeighborDef
         dataArray[3] += network.meanProbRandom
         dataArray[4] += network.meanDegree
-        dataArray[5] += network.meanCoopConns
-        dataArray[6] += network.meanDefConns
-        dataArray[7] += network.meanCoopDefDistance
-        dataArray[8] += network.meanDistInclusion
-        dataArray[9] += network.meanCoopFreq
+        dataArray[5] += network.meanAssortment
+        dataArray[6] += network.meanCoopDefDistance
+        dataArray[7] += network.meanDistInclusion
+        dataArray[8] += network.meanCoopFreq
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("assortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanCoopToCoopConns", dataArray[5], "meanDefToDefConns", dataArray[6], "meanDistanceFromDefToCoop", dataArray[7], "meanDistanceInclusion", dataArray[8], "meanCooperationRatio", dataArray[9])
+    save("assortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
