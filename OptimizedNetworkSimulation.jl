@@ -104,18 +104,22 @@ function degrees(network::NetworkParameters)
     degTotal = 0
     assmtTotal = 0
     for(i) in 1:network.popSize
-        degCounter = 0
-        assmtCounter = 0
+        degCounter = 0.0
+        assmtCounter = 0.0
         for(ii) in 1:network.popSize
             if(network.edgeMatrix[i, ii] != 0)
-                degCounter += 1
+                degCounter += 1.0
                 if(network.popStrategies[i] == network.popStrategies[ii])
-                    assmtCounter += 1
+                    assmtCounter += 1.0
                 end
             end
         end
         degTotal += degCounter
-        assmtTotal += (assmtCounter/degCounter)
+        if(degCounter != 0)
+            assmtTotal += (assmtCounter/degCounter)
+        else
+            assmtTotal += 0
+        end
     end
     degTotal /= network.popSize
     assmtTotal /= network.popSize
