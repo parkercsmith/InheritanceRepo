@@ -118,7 +118,7 @@ function degrees(network::NetworkParameters)
         degTotal += degCounter
     end
     degTotal /= network.popSize
-    assmtTotal /= ((factorial(network.popSize))/(6*factorial(network.popSize-3)))
+    assmtTotal /= ((factorial(big(network.popSize)))/(6*factorial(big(network.popSize-3)))
     network.meanDegree += degTotal
     network.meanAssortment += assmtTotal
 end
