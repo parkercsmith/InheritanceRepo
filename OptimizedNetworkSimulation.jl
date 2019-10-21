@@ -105,24 +105,20 @@ function degrees(network::NetworkParameters)
     assmtTotal = 0
     for(i) in 1:network.popSize
         degCounter = 0.0
-        assmtCounter = 0.0
         for(ii) in 1:network.popSize
             if(network.edgeMatrix[i, ii] != 0)
                 degCounter += 1.0
-                if(network.popStrategies[i] == network.popStrategies[ii])
-                    assmtCounter += 1.0
+                for(iii) in 1:network.popSize
+                    if(network.edgeMatrix[ii, iii] != 0 && network.edgeMatrix[i, iii] != 0)
+                        assmtTotal += 1.0
+                    end
                 end
             end
         end
         degTotal += degCounter
-        if(degCounter != 0)
-            assmtTotal += (assmtCounter/degCounter)
-        else
-            assmtTotal += 0
-        end
     end
     degTotal /= network.popSize
-    assmtTotal /= network.popSize
+    assmtTotal /= ((factorial(network.popSize))/(6*factorial(network.popSize-3)))
     network.meanDegree += degTotal
     network.meanAssortment += assmtTotal
 end
@@ -333,7 +329,7 @@ function runSims(CL::Float64, BEN::Float64)
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("assortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
+    save("newAssortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
