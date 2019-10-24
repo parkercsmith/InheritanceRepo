@@ -103,22 +103,35 @@ end
 function degrees(network::NetworkParameters)
     degTotal = 0
     assmtTotal = 0
+    coopCount = 0.0
+    for(i) in 1:network.popSize
+        if(network.popStrategies[i]==1)
+            coopCount+=1.0
+        end
+    end
+    coopCount = coopCount/network.popSize
     for(i) in 1:network.popSize
         degCounter = 0.0
+        assmtCounter = 0.0
         for(ii) in 1:network.popSize
             if(network.edgeMatrix[i, ii] != 0)
                 degCounter += 1.0
                 for(iii) in 1:network.popSize
                     if(network.edgeMatrix[ii, iii] != 0 && network.edgeMatrix[i, iii] != 0)
-                        assmtTotal += 1.0
+                        assmtCounter += 1.0
                     end
                 end
             end
         end
         degTotal += degCounter
+        if(network.popStartegies[i]==1)
+            assmtTotal+= (assmtCounter/degCounter)-(coopCount)
+        else
+            assmtTotal+= (assmtCounter/degCounter)-(1-coopCount)
+        end
     end
     degTotal /= network.popSize
-    assmtTotal /= ((factorial(big(network.popSize)))/(6*factorial(big(network.popSize-3))))
+    assmtTotal /= network.popSize
     network.meanDegree += degTotal
     network.meanAssortment += assmtTotal
 end
@@ -215,13 +228,13 @@ function birth(network::NetworkParameters, child::Int64, parent::Int64)
     for(i) in 1:network.popSize
         if(i != child && network.edgeMatrix[i, child] == 0)
             if(network.edgeMatrix[i, parent] != 0)
-                if(network.popStrategies[i] == 1) #PNC MODE
+                if(network.popStrategies[i] == 1) #Base MODE
                     if(rand() < network.popPNC[child])
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
                 else
-                    if(rand() < network.popPND[child]) #PND MODE
+                    if(rand() < network.popPNC[child]) #Base MODE
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
@@ -329,7 +342,7 @@ function runSims(CL::Float64, BEN::Float64)
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("newAssortmentCD_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
+    save("newAssortmentBase_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
