@@ -124,7 +124,7 @@ function degrees(network::NetworkParameters)
             end
         end
         degTotal += degCounter
-        if(network.popStartegies[i]==1)
+        if(network.popStrategies[i]==1)
             assmtTotal+= (assmtCounter/degCounter)-(coopCount)
         else
             assmtTotal+= (assmtCounter/degCounter)-(1-coopCount)
