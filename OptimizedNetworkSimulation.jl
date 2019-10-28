@@ -228,13 +228,13 @@ function birth(network::NetworkParameters, child::Int64, parent::Int64)
     for(i) in 1:network.popSize
         if(i != child && network.edgeMatrix[i, child] == 0)
             if(network.edgeMatrix[i, parent] != 0)
-                if(network.popStrategies[i] == 1) #PNC MODE
+                if(network.edgeMatrix[i, parent] == 1) #PNI MODE
                     if(rand() < network.popPNC[child])
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
                 else
-                    if(rand() < network.popPND[child]) #PND MODE
+                    if(rand() < network.popPND[child]) #PNR MODE
                         network.edgeMatrix[i, child] = 1
                         network.edgeMatrix[child, i] = 1
                     end
@@ -342,7 +342,7 @@ function runSims(CL::Float64, BEN::Float64)
     end
     dataArray[:] ./= Float64(repSims)
     #EDIT NAME
-    save("newAssortmentCD_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
+    save("newAssortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
 end
 
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
