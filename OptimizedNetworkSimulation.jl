@@ -6,7 +6,7 @@ using JLD2
 using ArgParse
 using StatsBase
 using FileIO
-using LightGraphs, GraphPlot, Compose, Colors
+#using LightGraphs, GraphPlot, Compose, Colors
 #using Plots
 
 mutable struct NetworkParameters
