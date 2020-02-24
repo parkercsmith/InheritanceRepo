@@ -463,7 +463,7 @@ function runSims(CL::Float64, BEN::Float64)
         dataArray[12] += network.meanDefLoners
     end
     dataArray[:] ./= Float64(repSims)
-    EDIT NAME
+    #EDIT NAME
     save("assortmentCheck_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPN", dataArray[1], "void", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8], "meanCooperatorDegree", dataArray[9], "meanDefectorDegree", dataArray[10], "meanCooperativeLoners", dataArray[11], "meanDefectiveLoners", dataArray[12])
     #stepwise
 end
