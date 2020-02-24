@@ -1,7 +1,5 @@
 #!/usr/bin/env julia
 
-using GraphPlot
-
 using JLD2
 using ArgParse
 using StatsBase
