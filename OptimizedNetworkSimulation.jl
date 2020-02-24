@@ -1,9 +1,12 @@
 #!/usr/bin/env julia
 
+using GraphPlot
+
 using JLD2
 using ArgParse
 using StatsBase
 using FileIO
+using LightGraphs, GraphPlot, Compose, Colors
 #using Plots
 
 mutable struct NetworkParameters
@@ -14,9 +17,13 @@ mutable struct NetworkParameters
     meanProbNeighborDef::Float64
     meanProbRandom::Float64
     meanDegree::Float64
+    meanCoopDegree::Float64
+    meanDefDegree::Float64
     meanAssortment::Float64
     meanCoopDefDistance::Float64
     meanDistInclusion::Float64
+    meanCoopLoners::Float64
+    meanDefLoners::Float64
 
     #Node characteristics
     popPNC::Array{Float64, 1}
@@ -62,7 +69,7 @@ mutable struct NetworkParameters
         mu = .01
         delta = 0.1 #EDIT 0.5
 
-        new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, popPNC, popPND, popPR, popStrategies, zeros(Float64, popSize), popFitness, numGens, popSize, edgeMatrix, cost, benefit, synergism, linkCost, mu, delta)
+        new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, popPNC, popPND, popPR, popStrategies, zeros(Float64, popSize), popFitness, numGens, popSize, edgeMatrix, cost, benefit, synergism, linkCost, mu, delta)
     end
 end
 
@@ -102,6 +109,10 @@ end
 
 function degrees(network::NetworkParameters)
     degTotal = 0
+    coopDegTotal = 0
+    defDegTotal = 0
+    defLoners = 0
+    coopLoners = 0
     assmtTotal = 0
     coopCount = 0.0
     for(i) in 1:network.popSize
@@ -122,17 +133,34 @@ function degrees(network::NetworkParameters)
             end
         end
         degTotal += degCounter
+        if(network.popStrategies[i] == 1)
+            coopDegTotal += degCounter
+        else
+            defDegTotal += degCounter
+        end
         if(degCounter > 0)
             if(network.popStrategies[i]==1)
                 assmtTotal+= (assmtCounter/degCounter)-(coopCount)
             else
                 assmtTotal+= (assmtCounter/degCounter)-(1-coopCount)
             end
+        else
+            if(network.popStrategies[i] == 1)
+                coopLoners += 1
+            else
+                defLoners += 1
+            end
         end
     end
     degTotal /= network.popSize
+    coopDegTotal /= (coopCount*network.popSize)
+    defDegTotal /= ((1-coopCount)*network.popSize)
     assmtTotal /= network.popSize
+    network.meanCoopLoners += coopLoners
+    network.meanDefLoners += defLoners
     network.meanDegree += degTotal
+    network.meanCoopDegree += coopDegTotal
+    network.meanDefDegree += defDegTotal
     network.meanAssortment += assmtTotal
 end
 
@@ -192,7 +220,7 @@ end
 
 function findMom(network::NetworkParameters, kID::Int64)
     network.popFitness[kID] = 0
-    fitWeights = weights(network.popFitness)
+    fitWeights = StatsBase.weights(network.popFitness)
     momIndex = sample(1:network.popSize, fitWeights)
     momIndex
 end
@@ -288,36 +316,124 @@ function getDegree(network::NetworkParameters) #made less efficient by 2 in edge
         end
         #degGetter[i] = sum(edgeMatrix[i,:])
     end
-
     degGetter
 end
 
 function runSims(CL::Float64, BEN::Float64)
-    dataArray = zeros(8)
-    repSims = 10
+    dataArray = zeros(12)
+    repSims = 10 #stepwise
     for(x) in 1:repSims
+
 
         #initializes globalstuff structure with generic constructor
         network = NetworkParameters(BEN, CL)
 
         #checks efficiency of simulation while running it
-        for(g) in 1:(network.numGens * network.popSize)
+        askContinue = ""
 
-            childID = death(network)
-            parentID = findMom(network, childID)
-            birth(network, childID, parentID)
-            if(g > (network.numGens * network.popSize / 5))
-                cooperate(network)
-            end
-            resolveFitnesses(network)
+        for(g) in 1:(network.numGens)
 
-            if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
-                coopRatio(network)
-                probNeighbor(network)
-                probRandom(network)
-                degrees(network)
-                distance(network)
-            end
+            #if(askContinue != "Quit")#Generational
+
+                for(gg) in 1:(network.popSize)
+
+                    #if(askContinue != "Quit") #Individual
+
+                        childID = death(network)
+                        parentID = findMom(network, childID)
+                        birth(network, childID, parentID)
+                        if(g > (network.numGens * network.popSize / 5))
+                            cooperate(network)
+                        end
+                        resolveFitnesses(network)
+
+                        if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
+                            coopRatio(network)
+                            probNeighbor(network)
+                            probRandom(network)
+                            degrees(network)
+                            distance(network)
+                        end
+
+                        #=askContinue = ""#Individual
+                        if(g > (0.2 * network.numGens))
+                            askContinue = input("Please enter 'Quit' to stop the simulation. Otherwise, hit enter to continue.")
+                            print("\n")
+
+                            #setting up network plotting
+                            #labels 1-100 for each Node
+                            graphLabels = zeros(Int64, network.popSize)
+                            for(i) in 1:network.popSize
+                                graphLabels[i] = i
+                            end
+                            #defectors are ivory and cooperators are blue
+                            graphColors = [parse(Colorant, "ivory4"), parse(Colorant, "dodgerblue")]
+                            #default is defectors; sets cooperators blue
+                            graphFills = []
+                            for(i) in 1:network.popSize
+                                push!(graphFills, parse(Colorant, "ivory4"))
+                            end
+                            for(i) in 1:network.popSize
+                                if(network.popStrategies[i]==1)
+                                    graphFills[i] = parse(Colorant, "dodgerblue")
+                                end
+                            end
+                            #build the graph with connections
+                            graph = SimpleGraph(network.popSize)
+                            for(i) in 1:network.popSize
+                                for(ii) in 1:network.popSize
+                                    if(network.edgeMatrix[i, ii] != 0)
+                                        add_edge!(graph, i, ii)
+                                    end
+                                end
+                            end
+                            #plot the graph
+                            display(gplot(graph, nodelabel = graphLabels, nodefillc = graphFills))
+                        end#Individual=#
+
+                    #end #Individual
+
+                end
+
+                #=Generational
+                askContinue = ""
+                if(g > (0.2 * network.numGens))
+                    askContinue = input("Please enter 'Quit' to stop the simulation. Otherwise, hit enter to continue.")
+                    print("\n")
+
+                    #setting up network plotting
+                    #labels 1-100 for each Node
+                    graphLabels = zeros(Int64, network.popSize)
+                    for(i) in 1:network.popSize
+                        graphLabels[i] = i
+                    end
+                    #defectors are ivory and cooperators are blue
+                    graphColors = [parse(Colorant, "ivory4"), parse(Colorant, "dodgerblue")]
+                    #default is defectors; sets cooperators blue
+                    graphFills = []
+                    for(i) in 1:network.popSize
+                        push!(graphFills, parse(Colorant, "ivory4"))
+                    end
+                    for(i) in 1:network.popSize
+                        if(network.popStrategies[i]==1)
+                            graphFills[i] = parse(Colorant, "dodgerblue")
+                        end
+                    end
+                    #build the graph with connections
+                    graph = SimpleGraph(network.popSize)
+                    for(i) in 1:network.popSize
+                        for(ii) in 1:network.popSize
+                            if(network.edgeMatrix[i, ii] != 0)
+                                add_edge!(graph, i, ii)
+                            end
+                        end
+                    end
+                    #plot the graph
+                    display(gplot(graph, nodelabel = graphLabels, nodefillc = graphFills))
+                end
+                =##Generational
+
+            #end #Generational
 
         end
 
@@ -326,6 +442,10 @@ function runSims(CL::Float64, BEN::Float64)
         network.meanProbNeighborDef /= 80000.0
         network.meanProbRandom /= 80000.0
         network.meanDegree /= 80000.0
+        network.meanCoopDegree /= 80000.0
+        network.meanDefDegree /= 80000.0
+        network.meanCoopLoners /= 80000.0
+        network.meanDefLoners /= 80000.0
         network.meanAssortment /= 80000.0
         network.meanCoopFreq /= 80000.0
         network.meanCoopDefDistance /= 80000.0
@@ -339,12 +459,17 @@ function runSims(CL::Float64, BEN::Float64)
         dataArray[6] += network.meanCoopDefDistance
         dataArray[7] += network.meanDistInclusion
         dataArray[8] += network.meanCoopFreq
+        dataArray[9] += network.meanCoopDegree
+        dataArray[10] += network.meanDefDegree
+        dataArray[11] += network.meanCoopLoners
+        dataArray[12] += network.meanDefLoners
     end
     dataArray[:] ./= Float64(repSims)
-    #EDIT NAME
-    save("newAssortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8])
+    EDIT NAME
+    save("newAssortmentIR_CL$(CL)_B$(BEN).jld2", "parameters", [CL, BEN], "meanPNI", dataArray[1], "meanPNR", dataArray[2], "meanPR", dataArray[3], "meanDegree", dataArray[4], "meanAssortment", dataArray[5], "meanDistanceFromDefToCoop", dataArray[6], "meanDistanceInclusion", dataArray[7], "meanCooperationRatio", dataArray[8], "meanCooperatorDegree", dataArray[9], "meanDefectorDegree", dataArray[10], "meanCooperativeLoners", dataArray[11], "meanDefectiveLoners", dataArray[12])
+    #stepwise
 end
-
+#stepwise
 argTab = ArgParseSettings(description = "arguments and stuff, don't worry about it")
 @add_arg_table argTab begin
     "--cLink"
@@ -353,8 +478,10 @@ argTab = ArgParseSettings(description = "arguments and stuff, don't worry about 
 end
 parsedArgs = parse_args(ARGS, argTab)
 currCostLink = parsedArgs["cLink"]
-for(b) in 7:10
+#stepwise
+for(b) in 7:10#stepwise
     currBenefit = Float64(b)
+    #currCostLink = 2.2 #stepwise
     runSims(currCostLink, currBenefit)
 end
 
