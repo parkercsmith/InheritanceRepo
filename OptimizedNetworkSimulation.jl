@@ -327,15 +327,15 @@ function runSims(CL::Float64, BEN::Float64)
         network = NetworkParameters(BEN, CL)
 
         #checks efficiency of simulation while running it
-        askContinue = ""
+        #askContinue = "" #stepwise
 
         for(g) in 1:(network.numGens)
 
-            #if(askContinue != "Quit")#Generational
+            #if(askContinue != "Quit")#Generational stepwise
 
                 for(gg) in 1:(network.popSize)
 
-                    #if(askContinue != "Quit") #Individual
+                    #if(askContinue != "Quit") #Individual stepwise
 
                         childID = death(network)
                         parentID = findMom(network, childID)
@@ -482,7 +482,6 @@ for(b) in 7:10#stepwise
     #currCostLink = 2.2 #stepwise
     runSims(currCostLink, currBenefit)
 end
-
 
 #=profiling
 using Profile
