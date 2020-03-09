@@ -345,7 +345,7 @@ function runSims(CL::Float64, BEN::Float64)
                         end
                         resolveFitnesses(network)
 
-                        if(g > (network.numGens * network.popSize / 5) && (g % network.popSize) == 0)
+                        if(g > (network.numGens / 5) && (gg % network.popSize) == 0)
                             coopRatio(network)
                             probNeighbor(network)
                             probRandom(network)
